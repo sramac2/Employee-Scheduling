@@ -1,7 +1,6 @@
 enum ShiftPreference {
   morning(0),
   afternoon(1),
-  notWorking(-1),
   evening(2);
 
   const ShiftPreference(this.value);
@@ -15,8 +14,6 @@ enum ShiftPreference {
         return ShiftPreference.afternoon;
       case 2:
         return ShiftPreference.evening;
-      case -1:
-        return ShiftPreference.notWorking;
       default:
         throw Exception('invalid value: $value');
     }

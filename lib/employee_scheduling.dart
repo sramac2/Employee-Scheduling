@@ -38,37 +38,34 @@ class EmployeeScheduling {
     while (employees.length < 12) {
       stdout.writeln(
           'please enter the name and preference for employee #$count: ');
-      readCsvPreferences();
+      final employeeStr = stdin.readLineSync();
 
-      // final employeeStr = stdin.readLineSync();
+      if (employeeStr != null) {
+        // if user wants to populate it at any point of receiving input
+        if (employeeStr == 'auto') {
+          readCsvPreferences();
+        } else {
+          final splitRes = employeeStr.split(',');
+          if (splitRes.length != 8) {
+            stdout.writeln('please enter valid value');
+            continue;
+          } else {
+            for (int i = 1; i < splitRes.length; i++) {
+              int? preference = int.tryParse(splitRes[i]);
+              if (preference == null || (preference < 0 || preference > 2)) {
+                stdout.writeln('please enter valid value');
+              } else {
+                addEmployeesToList(splitRes);
+              }
+            }
+          }
+        }
 
-      // if (employeeStr != null) {
-      //   // if user wants to populate it at any point of receiving input
-      //   if (employeeStr == 'auto') {
-      //     readCsvPreferences();
-      //   } else {
-      //     final splitRes = employeeStr.split(',');
-      //     if (splitRes.length != 8) {
-      //       stdout.writeln('please enter valid value');
-      //       continue;
-      //     } else {
-      //       for (int i = 1; i < splitRes.length; i++) {
-      //         int? preference = int.tryParse(splitRes[i]);
-      //         if (preference == null || (preference < 0 || preference > 2)) {
-      //           stdout.writeln('please enter valid value');
-      //         } else {
-      //           addEmployeesToList(splitRes);
-      //         }
-      //       }
-      //     }
-      //   }
-
-      computeSchedule();
-      // } else {
-      stdout.writeln('please enter valid value');
-      // }
+        computeSchedule();
+      } else {
+        stdout.writeln('please enter valid value');
+      }
     }
-    // print(employees);
   }
 
   void computeSchedule() {
@@ -77,14 +74,26 @@ class EmployeeScheduling {
       final day = DayOfWeek.values[i];
       for (var e in employees.values) {
         final preference = e.preferences[day];
-        if (preference != null &&
-            preference != ShiftPreference.notWorking &&
-            employeeWorkingDays.containsKey(e.id)) {
+        if (preference != null && employeeWorkingDays.containsKey(e.id)) {
           if (schedule[i][preference.value].length < 2) {
-            // final a = schedule[i][preference.value];
-            // a.add(e.id);
-
             addWorkingDay(i, preference.value, e.id);
+          } else {
+            for (int j = 0; j < schedule[i].length; j++) {
+              if (schedule[i][j].length < 2 &&
+                  !_identifyEmployeeIsAlreadyWorking(e.id, i)) {
+                addWorkingDay(i, j, e.id);
+                break;
+              }
+            }
+
+            final nextDay = i % 6;
+            for (int j = 0; j < schedule[nextDay].length; j++) {
+              if (schedule[nextDay][j].length < 2 &&
+                  !_identifyEmployeeIsAlreadyWorking(e.id, nextDay)) {
+                addWorkingDay(i, j, e.id);
+                break;
+              }
+            }
           }
         }
       }
@@ -135,7 +144,7 @@ class EmployeeScheduling {
     final remainingEmployees = employeeWorkingDays.entries.toList();
     while (workers.length < 2) {
       int randomIdx = random.nextInt(employeeWorkingDays.length);
-      while (_identifyEmployeeIsWorking(
+      while (_identifyEmployeeIsAlreadyWorking(
           remainingEmployees[randomIdx].key, dayOfWeek)) {
         randomIdx = random.nextInt(employeeWorkingDays.length);
       }
@@ -144,12 +153,13 @@ class EmployeeScheduling {
     }
   }
 
-  bool _identifyEmployeeIsWorking(int empId, int dayOfWeek) {
+  bool _identifyEmployeeIsAlreadyWorking(int empId, int dayOfWeek) {
     for (var preference in schedule[dayOfWeek]) {
       if (preference.contains(empId)) {
         return true;
       }
     }
+
     return false;
   }
 
